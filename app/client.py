@@ -7,16 +7,16 @@ import sys
 
 class Client:
     def __init__(self, host, port):
-        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = port
-        self.menuString = ("new - create new room\n"+
+        self.menuString = ("new <title> - create new room with name <title>\n"+
                             "list - list available rooms\n"+
                             "join <room> - join an available room\n"+
                             "speakmode - enter and exit speakmode while in a room\n"+
                             "exit - exit the program")
     
     def connect(self):
+        self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))
 
     def send(self, message):
@@ -30,15 +30,17 @@ class Client:
         print(self.menuString)
 
 if __name__ == '__main__':
+
     if len(sys.argv) < 3:
         print ("USAGE: client.py <HOST> <PORT>")
         sys.exit(0)
 
     client = Client(sys.argv[1], int(sys.argv[2]))
-    client.connect()
+    #client.connect()
 
     while True:
-        userstring = input("Enter Command(M for Menu): ")
+        client.connect()
+        userstring = input("Enter Command (M for Menu): ")
 
         if userstring == "M":
             client.menu()
@@ -46,5 +48,6 @@ if __name__ == '__main__':
 
         client.send(userstring)
 
-        if userstring == "exit": 
+        if userstring == "exit":
+            #client.socket.close()
             sys.exit(0)
