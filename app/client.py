@@ -22,7 +22,7 @@ class Client:
         self.socket.connect((self.host, self.port))
         self.send("Hello")
 
-    # send a message and receive a reply
+    # send a message to server, print reply details to client
     def send(self, message):
         self.socket.sendall(message.encode('utf-8'))
         data = self.socket.recv(10000000)

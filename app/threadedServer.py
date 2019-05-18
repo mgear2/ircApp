@@ -92,7 +92,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # create a Server instance
-    server = Server('', int(sys.argv[1]))
+    serverthread = Server('', int(sys.argv[1]))
 
     # start a thread to listen for connections
-    server.start()
+    serverthread.start()
