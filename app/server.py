@@ -64,6 +64,6 @@ if __name__ == '__main__':
     while (1):
         status = server.serve()
         print("Status: {0}".format(status))
-        if status == "exit":
+        if status == "kill":
             server.disconnect()
             sys.exit(0)
