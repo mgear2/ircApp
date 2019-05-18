@@ -1,54 +1,58 @@
 #!/usr/bin/python
-# USAGE:   server.py <PORT>
+# USAGE:   threadedServer.py <PORT>
 #
-# EXAMPLE: server.py 8000
+# EXAMPLE: threadedServer.py 8000
 import socket
 import sys
+from threading import Thread
 from room import Room
+from clientThread import clientThread
 
-class Server:
+class Server(Thread):
     def __init__(self, host, port):
+        super(Server, self).__init__()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.host = host
-        self.port = port
+        self.socket.bind((host, port))
+        self.socket.listen(5)
+        self.clients = []
         self.rooms = []
         self.roomno = 0
 
-    def bind(self):
-        self.socket.bind((self.host, self.port))
+    # thread created will run this method to listen for client connections
+    def run(self):
+        while True:
+            conn, addr = self.socket.accept()
+            print("Client connected: {0}".format(addr))
+            newthread = clientThread(self, conn, addr)
+            self.clients.append(newthread)
+            newthread.start()
 
-    def listen(self):
-        self.socket.listen(5)
-
-    def connect(self):
-        self.conn, self.addr = self.socket.accept()
-
-    def disconnect(self):
-        self.conn.close()
-        self.socket.close()
-
-    def serve(self):
-        print ('client is at', self.addr)
-        data = self.conn.recv(1000000)
-        status = data.decode("utf-8")
-        updata = self.verify(status).encode("utf-8")
-        print ('sending data ', updata)
-        self.conn.send(updata)
-        return status
-
-    def verify(self, status):
-        if(status == ""):
-            return "Verified"
-        statusArray = status.split()
-        if(statusArray[0] == "new"):
-            self.newroom(statusArray[1])
-            return "Creating new room: {0}".format(statusArray[1])
-        return "Verified"
-
+    # room creation
     def newroom(self, name):
         newrm = Room(name, self.roomno)
         self.roomno += 1
         self.rooms.append(newrm)
+
+    # lists the clients on the server side
+    def clientlist(self):
+        clientstring = ""
+        for client in self.clients:
+            clientstring += (client.name +"\n")
+            print(client, client.name)
+        return clientstring
+
+    # lists the clients on the server side
+    def roomlist(self):
+        roomstring = ""
+        for room in self.rooms:
+            roomstring += (room.name + "\n")
+            print(room, room.name)
+        return roomstring
+
+    # kill the server. Used for testing. 
+    def exit(self):
+        self.socket.close()
+        sys.exit(0)
 
 if __name__ == '__main__':
 
@@ -56,14 +60,8 @@ if __name__ == '__main__':
         print ("USAGE:   main.py <PORT>")
         sys.exit(0)
 
-    server = Server('', int(sys.argv[1]))
-    server.bind()
-    server.listen()
-    server.connect()
+    # create a Server instance
+    serverthread = Server('', int(sys.argv[1]))
 
-    while (1):
-        status = server.serve()
-        print("Status: {0}".format(status))
-        if status == "kill":
-            server.disconnect()
-sys.exit(0)
+    # start a thread to listen for connections
+    serverthread.start()

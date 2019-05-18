@@ -20,7 +20,9 @@ class Client:
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))
-        self.send("Hello")
+        #self.send("Hello")
+        data = self.socket.recv(10000000)
+        print(data.decode("utf-8"))
 
     # send a message to server, print reply details to client
     def send(self, message):
