@@ -10,17 +10,18 @@ class Client:
         self.host = host
         self.port = port
         self.menuString = ("new <title> - create new room with name <title>\n"+
-                            "list - list available rooms\n"+
+                            "rooms - list available rooms\n"+
+                            "clients - list of clients from server directory\n"
                             "join <room> - join an available room\n"+
                             "speakmode - enter and exit speakmode while in a room\n"+
                             "kill - kill the server\n"+
                             "exit - exit the program")
+        self.rooms = []
     
     # create a socket instance and connect
     def connect(self):
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.socket.connect((self.host, self.port))
-        #self.send("Hello")
         data = self.socket.recv(10000000)
         print(data.decode("utf-8"))
 
@@ -29,6 +30,11 @@ class Client:
         self.socket.sendall(message.encode('utf-8'))
         data = self.socket.recv(10000000)
         print(data.decode("utf-8") + '; received '+ str(len(data)) + ' bytes')
+        reply = data.decode("utf-8")
+        if reply != "":
+            statusArray = reply.split()
+            if statusArray[0] == "Joined":
+                self.rooms.append(statusArray[1])
 
     # print out a menu to instruct users in app usage
     def menu(self):
@@ -55,6 +61,10 @@ if __name__ == '__main__':
             continue
 
         client.send(userstring)
+
+        if "sendall" in userstring:
+            data = client.socket.recv(10000000)
+            print(data.decode("utf-8") + '; received '+ str(len(data)) + ' bytes')
 
         if userstring == "exit":
             client.socket.close()
