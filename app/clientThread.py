@@ -6,6 +6,7 @@ class clientThread(Thread):
         self.name = addr
         self.conn = conn
         self.server = Server
+        self.memberlist = []
 
     # thread created will run this method to facilitate communication between the client and the server
     def run(self):
@@ -24,6 +25,12 @@ class clientThread(Thread):
         statusArray = data.split()
         keyA = statusArray[0]
         
+        keyB = 0
+        if len(statusArray) > 1:
+            keyB = statusArray[1]
+        else:
+            keyB = "Default"
+        
         reply = "Verified"
 
         if keyA == "new":
@@ -38,6 +45,15 @@ class clientThread(Thread):
         elif keyA == "rooms":
             print("keyA == rooms")
             reply = self.rooms()
+        elif keyA == "join":
+            print(f"keyB == {keyB}")
+            reply = self.join(keyB)
+        elif keyA == 'leave':
+            reply = self.leave(keyB)
+        elif keyA == 'members':
+            reply = self.members(keyB)
+        elif keyA == 'chat':
+            reply = self.sendall(keyB, statusArray)
 
         return reply
 
@@ -48,7 +64,9 @@ class clientThread(Thread):
         else:
             keyB = "Default"
 
-        self.server.newroom(keyB)
+        res = self.server.newroom(keyB)
+        if not res:
+            return "Room in use, please enter new name.\n"
         return "Creating new room: {0}".format(keyB)
 
     def kill(self):
@@ -68,3 +86,41 @@ class clientThread(Thread):
         if reply == "":
             reply = "No rooms"
         return reply
+
+    def join(self, keyB):
+        # joins a room
+        try:
+            room = self.server.rooms[keyB]
+        except:
+            return "Could not find room"
+        room.add(self.name, self.conn)
+        return "Joining room"
+
+    def leave(self, keyB):
+        #leaves a room
+        try:
+            room = self.server.rooms[keyB]
+        except:
+            return "Could not find room"
+        room.remove(self.name)
+        return "Joining room"
+
+    def members(self, keyB):
+        try:
+            room = self.server.rooms[keyB]
+        except:
+            return "Coult not find room"
+        string = room.memberlist()
+        if string == "":
+            string = "No members in room"
+        return string
+
+    def sendall(self, keyB, statusArray):
+        try:
+            room = self.server.rooms[keyB]
+        except:
+            return "Could not find room"
+        msg = "".join(str(item + ' ') for item in statusArray[2:])
+        msg += '\n'
+        room.sendall(msg)
+        return "Sending message..."

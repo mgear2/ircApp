@@ -15,6 +15,7 @@ class Client:
                             "speakmode - enter and exit speakmode while in a room\n"+
                             "kill - kill the server\n"+
                             "exit - exit the program")
+        self.rooms = []
     
     # create a socket instance and connect
     def connect(self):
@@ -29,6 +30,12 @@ class Client:
         self.socket.sendall(message.encode('utf-8'))
         data = self.socket.recv(10000000)
         print(data.decode("utf-8") + '; received '+ str(len(data)) + ' bytes')
+        reply = data.decode("utf-8")
+        if reply != "":
+            statusArray = reply.split()
+            if statusArray[0] == 'joined':
+                # appends rooms that we are in
+                self.rooms.append(statusArray[1])
 
     # print out a menu to instruct users in app usage
     def menu(self):

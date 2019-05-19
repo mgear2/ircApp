@@ -15,8 +15,10 @@ class Server(Thread):
         self.socket.bind((host, port))
         self.socket.listen(5)
         self.clients = []
-        self.rooms = []
+        self.rooms = {}
         self.roomno = 0
+
+        self.newroom("Default")
 
     # thread created will run this method to listen for client connections
     def run(self):
@@ -29,9 +31,12 @@ class Server(Thread):
 
     # room creation
     def newroom(self, name):
+        if name in self.rooms:
+            return False
         newrm = Room(name, self.roomno)
         self.roomno += 1
-        self.rooms.append(newrm)
+        self.rooms[newrm.name] = newrm
+        return True
 
     # lists the clients on the server side
     def clientlist(self):
@@ -45,8 +50,8 @@ class Server(Thread):
     def roomlist(self):
         roomstring = ""
         for room in self.rooms:
-            roomstring += (room.name + "\n")
-            print(room, room.name)
+            roomstring += (room + "\n")
+            print(room)
         return roomstring
 
     # kill the server. Used for testing. 
