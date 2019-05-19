@@ -6,7 +6,7 @@ import socket
 import sys
 from threading import Thread
 from room import Room
-from clientThread import clientThread
+from serverThread import serverThread
 
 class Server(Thread):
     def __init__(self, host, port):
@@ -24,7 +24,7 @@ class Server(Thread):
         while True:
             conn, addr = self.socket.accept()
             print("Client connected: {0}".format(addr))
-            newthread = clientThread(self, conn, addr)
+            newthread = serverThread(self, conn)
             self.clients.append(newthread)
             newthread.start()
 
@@ -65,7 +65,7 @@ if __name__ == '__main__':
         sys.exit(0)
 
     # create a Server instance
-    serverthread = Server('', int(sys.argv[1]))
+    server = Server('', int(sys.argv[1]))
 
     # start a thread to listen for connections
-    serverthread.start()
+    server.start()

@@ -20,8 +20,9 @@ class Room:
             memberstring += (member + "\n")
         return memberstring
 
-    def sendall(self, message):
+    def sendall(self, user, string):
         for member in self.members:
             conn = self.members[member]
             print("Sending to {0}".format(conn))
+            message = user + " says: " + string
             conn.sendall(message.encode("utf-8"))

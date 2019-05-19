@@ -1,24 +1,24 @@
 from threading import Thread
 
-class clientThread(Thread):
-    def __init__(self, Server, conn, addr):
-        super(clientThread, self).__init__()
-        self.name = addr
+class serverThread(Thread):
+    def __init__(self, Server, conn):
+        super(serverThread, self).__init__()
         self.conn = conn
         self.server = Server
 
     # thread created will run this method to facilitate communication between the client and the server
     def run(self):
         self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
+        self.name = self.conn.recv(4096).decode("utf=8")
         while True: 
-            data = self.conn.recv(1000000)
+            data = self.conn.recv(4096)
             print(data)
             if data.decode("utf-8") == "exit":
                 break
             reply = self.verify(data.decode("utf-8"))
             print("Sending: " + reply)
             self.conn.sendall(reply.encode("utf-8"))
-        self.conn.close()
+        self.disconnect()
 
     def verify(self, data):
         statusArray = data.split()
@@ -116,5 +116,15 @@ class clientThread(Thread):
         if isinstance(room, str):
             return room
 
-        room.sendall(str(statusArray))
-        return " Received"
+        #remove the first two items from statusArray and convert to a string
+        statusArray = statusArray[2:]
+        statusArray = ' '.join(statusArray)
+
+        room.sendall(self.name, statusArray)
+        return ""
+
+    def disconnect(self):
+        for room in self.server.rooms:
+            current = self.server.rooms[room]
+            current.remove(self.name)
+        self.conn.close()
