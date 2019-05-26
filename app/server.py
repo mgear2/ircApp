@@ -45,7 +45,7 @@ class Server(Thread):
             print(client, client.name)
         return clientstring
 
-    # lists the clients on the server side
+    # lists the rooms on the server side
     def roomlist(self):
         roomstring = ""
         for room in self.rooms:

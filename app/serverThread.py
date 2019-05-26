@@ -31,7 +31,7 @@ class serverThread(Thread):
         reply = "Verified"
 
         if keyA == "new":
-            reply = self.new(keyB)
+            reply = self.new(statusArray)
         elif keyA == "kill":
             reply = self.kill()
         elif keyA == "clients":
@@ -39,9 +39,9 @@ class serverThread(Thread):
         elif keyA == "rooms":
             reply = self.rooms()
         elif keyA == "join":
-            reply = self.join(keyB)
+            reply = self.join(statusArray)
         elif keyA == "leave":
-            reply = self.leave(keyB)
+            reply = self.leave(statusArray)
         elif keyA == "members":
             reply = self.memberlist(keyB)
         elif keyA == "send":
@@ -49,12 +49,14 @@ class serverThread(Thread):
 
         return reply
 
-    def new(self, keyB):
+    def new(self, array):
         # room creation
-        returnval = self.server.newroom(keyB)
-        if not returnval:
-            return "Roomname {0} in use!".format(keyB)
-        return "Creating new room: {0}".format(keyB)
+        rooms = array[1:]
+        for room in rooms:
+            returnval = self.server.newroom(room)
+            if not returnval:
+                return "Roomname {0} in use!".format(room)
+        return "Creating new room: {0}".format(' '.join(room for room in rooms))
 
     def kill(self):
         # kill the server. Used for testing. 
@@ -79,27 +81,18 @@ class serverThread(Thread):
             room = self.server.rooms[room]
         except:
             return "Could not find {0}".format(room)
-
         return room
 
     # joins a room
-    def join(self, keyB):
-        room = self.findroom(keyB)
-        if isinstance(room, str):
-            return room
+    def join(self, array):
+        rooms = self._search_rooms(array)
+        self._room_action(rooms, 'add')
+        return "Joined {0}".format(' '.join(room.name for room in rooms))
 
-        room.add(self.name, self.conn)
-
-        return "Joined {0}".format(keyB)
-
-    def leave(self, keyB):
-        room = self.findroom(keyB)
-        if isinstance(room, str):
-            return room
-
-        room.remove(self.name)
-
-        return "Left {0}".format(keyB)
+    def leave(self, array):
+        rooms = self._search_rooms(array)
+        self._room_action(rooms, 'remove', False)
+        return "Left {0}".format(' '.join(room.name for room in rooms))
 
     def memberlist(self, keyB):
         room = self.findroom(keyB)
@@ -128,3 +121,27 @@ class serverThread(Thread):
             current = self.server.rooms[room]
             current.remove(self.name)
         self.conn.close()
+
+    def _search_rooms(self, array):
+        '''Searches an array of string for room names and
+        returns any matches in the beginning of the array.'''
+        res = []
+        # Search the string for rooms
+        for word in array[1:]:
+            if self.findroom(word):
+                res.append(self.findroom(word))
+            else:
+                break
+        return res
+
+    def _room_action(self, array, string, conn = True):
+        '''Performs a method on the room class based on parameters given'''
+        for room in array:
+            if isinstance(room, str):
+                return room            
+            room_method = getattr(room, string)
+            if conn:
+                room_method(self.name, self.conn)
+            else:
+                room_method(self.name)
+        return
