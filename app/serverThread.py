@@ -1,4 +1,5 @@
 from threading import Thread
+from room import Room
 
 class serverThread(Thread):
     def __init__(self, Server, conn):
@@ -86,13 +87,17 @@ class serverThread(Thread):
     # joins a room
     def join(self, array):
         rooms = self._search_rooms(array)
-        self._room_action(rooms, 'add')
-        return "Joined {0}".format(' '.join(room.name for room in rooms))
+        rooms = self._room_action(rooms, 'add')
+        retstring = "Joined "
+        retstring += rooms
+        return retstring
 
     def leave(self, array):
         rooms = self._search_rooms(array)
-        self._room_action(rooms, 'remove', False)
-        return "Left {0}".format(' '.join(room.name for room in rooms))
+        rooms = self._room_action(rooms, 'remove', False)
+        retstring = "Left "
+        retstring += rooms
+        return retstring
 
     def memberlist(self, keyB):
         room = self.findroom(keyB)
@@ -136,12 +141,22 @@ class serverThread(Thread):
 
     def _room_action(self, array, string, conn = True):
         '''Performs a method on the room class based on parameters given'''
+        retrooms = []
+        notfound = []
+        retstring = ""
         for room in array:
-            if isinstance(room, str):
-                return room            
-            room_method = getattr(room, string)
+            if isinstance(room, Room):
+                retrooms.append(room)
+                room_method = getattr(room, string)
+            else: 
+                notfound.append(room)
+                continue
             if conn:
                 room_method(self.name, self.conn)
             else:
                 room_method(self.name)
-        return
+        if retrooms != []:
+                retstring += "{0}; ".format(' '.join(room.name for room in retrooms))
+        if len(retrooms) < len(array):
+            retstring += str(notfound)
+        return retstring
