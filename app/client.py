@@ -51,7 +51,7 @@ class Client(Thread):
             try:
                 data = self.socket.recv(4096)
                 self.verify(data)
-            except (socket.error, BlockingIOError) as e: 
+            except (socket.error, WindowsError, BlockingIOError) as e: 
                 err = e.args[0]
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:

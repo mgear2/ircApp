@@ -22,7 +22,17 @@ class Server(Thread):
     # thread created will run this method to listen for client connections
     def run(self):
         while True:
-            conn, addr = self.socket.accept()
+            try:
+                conn, addr = self.socket.accept()
+            except (socket.error, WindowsError) as e: 
+                err = e.args[0]
+                # if an operation was attempted on something not a socket or host aborts connection
+                if err == 10038 or err == 10053:
+                    print("Connection closed; exiting...")
+                    break
+                else:
+                    print("Caught: " + str(e))
+                    break
             print("Client connected: {0}".format(addr))
             newthread = serverThread(self, conn)
             self.clients.append(newthread)
