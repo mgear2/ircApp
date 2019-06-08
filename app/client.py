@@ -66,7 +66,7 @@ class Client(Thread):
                     sleep(0.5)
                     continue
                 # if an operation was attempted on something not a socket or host aborts connection
-                if err == 10038 or err == 10053:
+                if err == 10038 or err == 10053 or err == 9:
                     print("Connection closed; exiting...")
                     break
                 else:
