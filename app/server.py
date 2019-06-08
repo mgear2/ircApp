@@ -18,13 +18,21 @@ class Server(Thread):
         self.rooms = {}
         self.roomno = 0
         self.newroom("Default")
+        self.platform = sys.platform
+        self.seterror()
+    
+    def seterror(self):
+        if self.platform == "linux":
+            self.error = BlockingIOError
+        elif "win" in self.platform:
+            self.error = WindowsError
 
     # thread created will run this method to listen for client connections
     def run(self):
         while True:
             try:
                 conn, addr = self.socket.accept()
-            except (socket.error, WindowsError) as e: 
+            except (socket.error, self.error) as e: 
                 err = e.args[0]
                 # if an operation was attempted on something not a socket or host aborts connection
                 if err == 10038 or err == 10053:
