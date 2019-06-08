@@ -25,6 +25,14 @@ class Client(Thread):
                             "kill - kill the server\n"+
                             "exit - exit the program")
         self.rooms = []
+        self.platform = sys.platform
+        self.seterror()
+    
+    def seterror(self):
+        if self.platform == "linux":
+            self.error = BlockingIOError
+        elif "win" in self.platform:
+            self.error = WindowsError
 
     # send a message to server, print reply details to client
     def send(self, message):
