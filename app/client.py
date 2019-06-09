@@ -48,7 +48,8 @@ class Client(Thread):
     def send(self, message):
         try:
             self.socket.sendall(message.encode('utf-8'))
-        except Exception:
+        except Exception as e:
+            print(e)
             print("Connection with server lost")
             self.exit()
         if message == "kill" or message == "exit":
@@ -69,7 +70,8 @@ class Client(Thread):
     def run(self):
         try:
             self.socket.connect((self.host, self.port))
-        except Exception:
+        except Exception as e:
+            print(e)
             print("Could not connect")
             self.exit()
         print("1")
