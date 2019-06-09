@@ -85,7 +85,7 @@ if __name__ == '__main__':
 
     while True:
         screenName = input("Enter desired screenname: ")
-        if len(screenName) <= 20 and check:
+        if len(screenName) <= 20:
             break
         print("Please select a username of 20 characters or less")
 
