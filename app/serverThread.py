@@ -3,13 +3,15 @@ from room import Room
 import sys
 
 class serverThread(Thread):
-    def __init__(self, Server, conn):
+    def __init__(self, Server, conn, addr):
         super(serverThread, self).__init__()
         self.conn = conn
+        self.addr = addr
         self.server = Server
 
     # thread created will run this method to facilitate communication between the client and the server
     def run(self):
+        print("Client connected: {0}".format(self.addr))
         self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
         self.name = self.conn.recv(4096).decode("utf=8")
         while self.server.alive: 

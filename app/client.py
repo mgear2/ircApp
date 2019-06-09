@@ -30,8 +30,10 @@ class Client(Thread):
         self.rooms = []
         self.platform = sys.platform
         self.seterror()
+        self.exitflag = False
     
     def exit(self):
+        self.exitflag = True
         self.socket.close()
         sys.exit(0)
 
@@ -46,12 +48,11 @@ class Client(Thread):
         self.socket.sendall(message.encode('utf-8'))
         if message == "kill" or message == "exit":
             self.exit()
-        return
 
     def verify(self, message):
         message = message.decode("utf-8")
         if message == 0:
-            print ("The server closed the connection. Exiting...")
+            print ("Verify: The server closed the connection. Exiting...")
             self.exit()
         if message == "":
             return
@@ -72,6 +73,8 @@ class Client(Thread):
             try:
                 data = self.socket.recv(4096)
                 self.verify(data)
+                if data == 0:
+                    print("data == 0")
             #except (socket.error, self.error) as e: 
             except Exception as e: 
                 err = e.args[0]
@@ -81,10 +84,10 @@ class Client(Thread):
                     continue
                 # if an operation was attempted on something not a socket or host aborts connection
                 if err == 10038 or err == 10053 or err == 9:
-                    print("Connection closed; exiting...")
+                    print("10038/10053/9: Connection closed; exiting...")
                     break
                 if err == 10054:
-                    print ("The server closed the connection. Exiting...")
+                    print ("10054: The server closed the connection. Exiting...")
                     self.exit()
                 else:
                     print("Caught: " + str(e))
@@ -95,45 +98,17 @@ class Client(Thread):
     def menu(self):
         print(self.menuString)
 
-if __name__ == '__main__':
-
-    if len(sys.argv) < 3:
-        print ("USAGE: client.py <HOST> <PORT>")
-        sys.exit(0)
-
-    while True:
-        screenName = input("Enter desired screenname: ")
-        if len(screenName) <= 20:
-            break
-        print("Please select a username of 20 characters or less")
-
-    client = Client(sys.argv[1], int(sys.argv[2]), screenName)
-    client.start()
-
-    print("Enter Command (M for Menu)")
-    exitflag = False
-
-    while True:
-        if exitflag == True:
-            break
-        sleep(0.5)
-
+    def input_windows(self):
         userstring = []
-
-        if client.platform == "linux":
-            print("> ", end='', flush=True)
-            userstring, w, x = select.select([sys.stdin], [], [], 600)
-            print(userstring)
-        elif "win" in client.platform:
-            print("> ", end='', flush=True)
+        while "win" in client.platform and client.exitflag == False:
+            print("> " + ''.join(userstring), end='', flush=True)
             t0 = time.time()
-            while time.time() - t0 < 600:
+            while time.time() - t0 < 1:
                 if msvcrt.kbhit():
                     character = msvcrt.getch()
                     char_decode = character.decode("utf-8")
                     if char_decode == '\b':
                         if len(userstring) > 0:
-                            #sys.stdout.write(" ")
                             sys.stdout.write("\b")
                             sys.stdout.write(" ")
                             sys.stdout.flush()
@@ -142,26 +117,66 @@ if __name__ == '__main__':
                         continue
                     elif char_decode == '\r':
                         print("\n")
-                        break
+                        return userstring
                     msvcrt.putch(character)
                     userstring.append(char_decode)
                 time.sleep(0.1)
+            sys.stdout.write("\r")
+            continue
+    
+    def input_linux(self):
+        userstring = []
+
+        if client.platform == "linux":
+            print("> ", end='', flush=True)
+            try:
+                userstring, w, x = select.select([sys.stdin], [], [], 1)
+                print(userstring)
+            except select.error as e:
+                print(e)
+        return userstring
+
+def getnamelist():
+    return
+
+def username():
+    while True:
+        screenName = input("Enter desired screenname: ")
+        if len(screenName) <= 20:
+            return screenName
+        print("Please select a username of 20 characters or less")
+
+if __name__ == '__main__':
+
+    if len(sys.argv) < 3:
+        print ("USAGE: client.py <HOST> <PORT>")
+        sys.exit(0)
+
+    screenName = username()
+
+    client = Client(sys.argv[1], int(sys.argv[2]), screenName)
+    client.start()
+
+    print("Enter Command (M for Menu)")
+    exitflag = False
+
+    while client.exitflag == False:
+        userstring = []
+
+        print(client.platform)
+
+        if client.platform == "linux":
+            userstring = client.input_linux()
+        elif "win" in client.platform:
+            userstring = client.input_windows()
+
+        if userstring == [] or userstring == None:
+            continue
 
         userstring = ''.join(userstring)
-        print(userstring)
-
-        # an empty userstring will cause errors if sent to the server
-        if userstring == "":
-            continue
 
         if userstring == "M":
             client.menu()
             continue
 
-        if userstring == "exit" or userstring == "kill":
-            exitflag = True
-
         client.send(userstring)
-
-        if userstring == "exit" or userstring == "kill":
-            sys.exit(0)

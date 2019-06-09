@@ -50,8 +50,8 @@ class Server(Thread):
                 else:
                     print("Caught: " + str(e))
                     break
-            print("Client connected: {0}".format(addr))
-            newthread = serverThread(self, conn)
+            #print("Client connected: {0}".format(addr))
+            newthread = serverThread(self, conn, addr)
             self.clients.append(newthread)
             newthread.start()
         sys.exit(0)
