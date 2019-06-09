@@ -33,7 +33,10 @@ class Client(Thread):
             self.error = BlockingIOError
         elif "win" in self.platform:
             self.error = WindowsError
+<<<<<<< HEAD
+=======
 
+>>>>>>> jason
 
     # send a message to server, print reply details to client
     def send(self, message):
@@ -67,7 +70,7 @@ class Client(Thread):
                     sleep(0.5)
                     continue
                 # if an operation was attempted on something not a socket or host aborts connection
-                if err == 10038 or err == 10053:
+                if err == 10038 or err == 10053 or err == 9:
                     print("Connection closed; exiting...")
                     break
                 else:

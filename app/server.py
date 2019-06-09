@@ -35,7 +35,7 @@ class Server(Thread):
             except (socket.error, self.error) as e: 
                 err = e.args[0]
                 # if an operation was attempted on something not a socket or host aborts connection
-                if err == 10038 or err == 10053:
+                if err == 10038 or err == 10053 or err == 9:
                     print("Connection closed; exiting...")
                     break
                 else:
