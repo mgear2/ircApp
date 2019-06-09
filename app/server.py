@@ -5,7 +5,7 @@
 import socket
 import sys
 import errno
-import sleep
+from time import sleep
 from threading import Thread
 from room import Room
 from serverThread import serverThread
@@ -32,9 +32,11 @@ class Server(Thread):
 
     # thread created will run this method to listen for client connections
     def run(self):
+        self.socket.setblocking(False)
         while self.alive:
             try:
                 conn, addr = self.socket.accept()
+                conn.setblocking(True)
             except (socket.error, self.error) as e: 
                 err = e.args[0]
                 err = e.args[0]
