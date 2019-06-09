@@ -31,12 +31,11 @@ class Client(Thread):
         self.rooms = []
         self.platform = sys.platform
         self.seterror()
-        self.exitflag = False
+        self.alive = True
     
     def exit(self):
-        self.exitflag = True
+        self.alive = False
         self.socket.close()
-        sys.exit(0)
 
     def seterror(self):
         if self.platform == "linux":
@@ -77,7 +76,7 @@ class Client(Thread):
         sleep(0.5)
         self.send(self.name)
 
-        while True:
+        while self.alive:
             try:
                 data = self.socket.recv(4096)
                 self.verify(data)
@@ -105,7 +104,7 @@ class Client(Thread):
 
 def input_windows():
     userstring = []
-    while client.exitflag == False:
+    while client.alive:
         print("> " + ''.join(userstring), end='', flush=True)
         t0 = time.time()
         while time.time() - t0 < 1:
@@ -133,7 +132,7 @@ def input_linux():
     userstring = []
     sleep(0.5)
     print("> ", end='', flush=True)
-    while client.exitflag == False:
+    while client.alive:
         userinput = select.select([sys.stdin], [], [], 1)
         if userinput:
             line = sys.stdin.readline()
@@ -165,9 +164,8 @@ if __name__ == '__main__':
     client.start()
 
     print("Enter Command (M for Menu)")
-    exitflag = False
 
-    while client.exitflag == False:
+    while client.alive:
         userstring = []
 
         if client.platform == "linux":
@@ -186,3 +184,5 @@ if __name__ == '__main__':
 
         print("Sending: " + userstring)
         client.send(userstring)
+
+    sys.exit(0)
