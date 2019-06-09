@@ -48,7 +48,7 @@ class Client(Thread):
     def send(self, message):
         try:
             self.socket.sendall(message.encode('utf-8'))
-        except:
+        except Exception:
             print("Connection with server lost")
             self.exit()
         if message == "kill" or message == "exit":
@@ -88,6 +88,9 @@ class Client(Thread):
             #except (socket.error, self.error) as e: 
             except Exception as e: 
                 err = e.args[0]
+                if err == errno.ECONNRESET:
+                    print("Connection reset")
+                    self.exit()
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
                     sleep(0.5)
@@ -95,14 +98,13 @@ class Client(Thread):
                 # if an operation was attempted on something not a socket or host aborts connection
                 if err == 10038 or err == 10053 or err == 9:
                     print("10038/10053/9: Connection closed; exiting...")
-                    break
+                    self.exit()
                 if err == 10054:
                     print ("10054: The server closed the connection. Exiting...")
                     self.exit()
                 else:
                     print("Caught: " + str(e))
                     self.exit()
-                    break
 
     # print out a menu to instruct users in app usage
     def menu(self):
