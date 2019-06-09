@@ -46,7 +46,11 @@ class Client(Thread):
 
     # send a message to server, print reply details to client
     def send(self, message):
-        self.socket.sendall(message.encode('utf-8'))
+        try:
+            self.socket.sendall(message.encode('utf-8'))
+        except:
+            print("Connection with server lost")
+            self.exit()
         if message == "kill" or message == "exit":
             self.exit()
 
@@ -63,7 +67,12 @@ class Client(Thread):
             self.rooms.append(statusArray[1])
 
     def run(self):
-        self.socket.connect((self.host, self.port))
+        try:
+            self.socket.connect((self.host, self.port))
+        except Exception:
+            print("Could not connect")
+            self.exit()
+        print("1")
         data = self.socket.recv(4096)
         self.verify(data)
         self.socket.setblocking(False)
@@ -101,7 +110,7 @@ class Client(Thread):
 
 def input_windows():
     userstring = []
-    while "win" in client.platform and client.exitflag == False:
+    while client.exitflag == False:
         print("> " + ''.join(userstring), end='', flush=True)
         t0 = time.time()
         while time.time() - t0 < 1:
@@ -127,11 +136,10 @@ def input_windows():
     
 def input_linux():
     userstring = []
-
     sleep(0.5)
     print("> ", end='', flush=True)
-    while client.platform == "linux" and client.exitflag == False:
-        userinput, w, x = select.select([sys.stdin], [], [], 1)
+    while client.exitflag == False:
+        userinput = select.select([sys.stdin], [], [], 1)
         if userinput:
             line = sys.stdin.readline()
             line = list(line)
@@ -152,7 +160,6 @@ def username():
         print("Please select a username of 20 characters or less")
 
 if __name__ == '__main__':
-
     if len(sys.argv) < 3:
         print ("USAGE: client.py <HOST> <PORT>")
         sys.exit(0)

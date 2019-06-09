@@ -15,7 +15,11 @@ class serverThread(Thread):
         self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
         self.name = self.conn.recv(4096).decode("utf=8")
         while self.server.alive: 
-            data = self.conn.recv(4096)
+            try:
+                data = self.conn.recv(4096)
+            except Exception:
+                print("{0} disconnected from {1}".format(self.name, self.addr))
+                break
             print(data)
             if data.decode("utf-8") == "exit":
                 break
@@ -52,7 +56,6 @@ class serverThread(Thread):
             reply = self.send(statusArray)
         elif keyA == "tell":    
             reply = self.tell(statusArray)
-
         return reply
 
     def new(self, array):
@@ -63,6 +66,12 @@ class serverThread(Thread):
             if not returnval:
                 return "Roomname {0} in use!".format(room)
         return "Creating new room: {0}".format(' '.join(room for room in rooms))
+ 
+    def disconnect(self):
+        for room in self.server.rooms:
+            current = self.server.rooms[room]
+            current.remove(self.name)
+        self.conn.close()
 
     def kill(self):
         # kill the server. Used for testing. 
@@ -150,15 +159,6 @@ class serverThread(Thread):
                 self.conn.send("You tell {0} : {1}".format(dest, msg).encode("utf-8"))
                 return ""
         return "I'm sorry, it appears {0} is offline.".format(dest)
-
-
-
-    def disconnect(self):
-        for room in self.server.rooms:
-            current = self.server.rooms[room]
-            current.remove(self.name)
-        self.conn.close()
-        sys.exit(0)
 
     def _search_rooms(self, array):
         '''Searches an array of string for room names and

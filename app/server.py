@@ -37,7 +37,8 @@ class Server(Thread):
             try:
                 conn, addr = self.socket.accept()
                 conn.setblocking(True)
-            except (socket.error, self.error) as e: 
+            #except (socket.error, self.error) as e: 
+            except Exception as e:
                 err = e.args[0]
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
@@ -89,13 +90,9 @@ class Server(Thread):
         sys.exit(0)
 
 if __name__ == '__main__':
-
     if len(sys.argv) < 2:
         print ("USAGE:   main.py <PORT>")
         sys.exit(0)
 
-    # create a Server instance
     server = Server('', int(sys.argv[1]))
-
-    # start a thread to listen for connections
     server.start()
