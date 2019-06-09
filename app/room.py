@@ -24,5 +24,6 @@ class Room:
         for member in self.members:
             conn = self.members[member]
             print("Sending to {0}".format(conn))
-            message = user + " says: " + string
+            message = user + " says in room " + self.name + " : " + string
             conn.sendall(message.encode("utf-8"))
+
