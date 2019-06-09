@@ -33,10 +33,6 @@ class Client(Thread):
             self.error = BlockingIOError
         elif "win" in self.platform:
             self.error = WindowsError
-<<<<<<< HEAD
-=======
-
->>>>>>> jason
 
     # send a message to server, print reply details to client
     def send(self, message):
@@ -89,7 +85,7 @@ if __name__ == '__main__':
 
     while True:
         screenName = input("Enter desired screenname: ")
-        if len(screenName) <= 20 and check:
+        if len(screenName) <= 20:
             break
         print("Please select a username of 20 characters or less")
 
