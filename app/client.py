@@ -5,6 +5,9 @@
 import socket
 import sys
 import errno
+import select
+import msvcrt
+import time
 from time import sleep
 from threading import Thread
 
@@ -28,6 +31,10 @@ class Client(Thread):
         self.platform = sys.platform
         self.seterror()
     
+    def exit(self):
+        self.socket.close()
+        sys.exit(0)
+
     def seterror(self):
         if self.platform == "linux":
             self.error = BlockingIOError
@@ -38,11 +45,14 @@ class Client(Thread):
     def send(self, message):
         self.socket.sendall(message.encode('utf-8'))
         if message == "kill" or message == "exit":
-            self.socket.close()
-            sys.exit(0)
+            self.exit()
+        return
 
     def verify(self, message):
         message = message.decode("utf-8")
+        if message == 0:
+            print ("The server closed the connection. Exiting...")
+            self.exit()
         if message == "":
             return
         print(message + '; received '+ str(len(message)) + ' bytes')
@@ -62,7 +72,8 @@ class Client(Thread):
             try:
                 data = self.socket.recv(4096)
                 self.verify(data)
-            except (socket.error, self.error) as e: 
+            #except (socket.error, self.error) as e: 
+            except Exception as e: 
                 err = e.args[0]
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
@@ -72,8 +83,12 @@ class Client(Thread):
                 if err == 10038 or err == 10053 or err == 9:
                     print("Connection closed; exiting...")
                     break
+                if err == 10054:
+                    print ("The server closed the connection. Exiting...")
+                    self.exit()
                 else:
                     print("Caught: " + str(e))
+                    self.exit()
                     break
 
     # print out a menu to instruct users in app usage
@@ -96,10 +111,44 @@ if __name__ == '__main__':
     client.start()
 
     print("Enter Command (M for Menu)")
+    exitflag = False
 
     while True:
+        if exitflag == True:
+            break
         sleep(0.5)
-        userstring = input("> ")
+
+        userstring = []
+
+        if client.platform == "linux":
+            print("> ", end='', flush=True)
+            userstring, w, x = select.select([sys.stdin], [], [], 600)
+            print(userstring)
+        elif "win" in client.platform:
+            print("> ", end='', flush=True)
+            t0 = time.time()
+            while time.time() - t0 < 600:
+                if msvcrt.kbhit():
+                    character = msvcrt.getch()
+                    char_decode = character.decode("utf-8")
+                    if char_decode == '\b':
+                        if len(userstring) > 0:
+                            #sys.stdout.write(" ")
+                            sys.stdout.write("\b")
+                            sys.stdout.write(" ")
+                            sys.stdout.flush()
+                            del userstring[-1]
+                        msvcrt.putch(character)
+                        continue
+                    elif char_decode == '\r':
+                        print("\n")
+                        break
+                    msvcrt.putch(character)
+                    userstring.append(char_decode)
+                time.sleep(0.1)
+
+        userstring = ''.join(userstring)
+        print(userstring)
 
         # an empty userstring will cause errors if sent to the server
         if userstring == "":
@@ -109,7 +158,10 @@ if __name__ == '__main__':
             client.menu()
             continue
 
+        if userstring == "exit" or userstring == "kill":
+            exitflag = True
+
         client.send(userstring)
 
-        #if userstring == "exit":
-        #    sys.exit(0)
+        if userstring == "exit" or userstring == "kill":
+            sys.exit(0)
