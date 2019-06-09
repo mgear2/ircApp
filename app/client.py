@@ -99,57 +99,47 @@ class Client(Thread):
     def menu(self):
         print(self.menuString)
 
-    def input_windows(self):
-        userstring = []
-        while "win" in client.platform and client.exitflag == False:
-            print("> " + ''.join(userstring), end='', flush=True)
-            t0 = time.time()
-            while time.time() - t0 < 1:
-                if msvcrt.kbhit():
-                    character = msvcrt.getch()
-                    char_decode = character.decode("utf-8")
-                    if char_decode == '\b':
-                        if len(userstring) > 0:
-                            sys.stdout.write("\b")
-                            sys.stdout.write(" ")
-                            sys.stdout.flush()
-                            del userstring[-1]
-                        msvcrt.putch(character)
-                        continue
-                    elif char_decode == '\r':
-                        print("\n")
-                        return userstring
+def input_windows():
+    userstring = []
+    while "win" in client.platform and client.exitflag == False:
+        print("> " + ''.join(userstring), end='', flush=True)
+        t0 = time.time()
+        while time.time() - t0 < 1:
+            if msvcrt.kbhit():
+                character = msvcrt.getch()
+                char_decode = character.decode("utf-8")
+                if char_decode == '\b':
+                    if len(userstring) > 0:
+                        sys.stdout.write("\b")
+                        sys.stdout.write(" ")
+                        sys.stdout.flush()
+                        del userstring[-1]
                     msvcrt.putch(character)
-                    userstring.append(char_decode)
-                time.sleep(0.1)
-            sys.stdout.write("\r")
-            continue
+                    continue
+                elif char_decode == '\r':
+                    print("\n")
+                    return userstring
+                msvcrt.putch(character)
+                userstring.append(char_decode)
+            time.sleep(0.1)
+        sys.stdout.write("\r")
+        continue
     
-    def input_linux(self):
-        userstring = []
-<<<<<<< HEAD
-        sleep(0.5)
-        print("> ", end='', flush=True)
-        while client.platform == "linux" and client.exitflag == False:
-            userinput, w, x = select.select([sys.stdin], [], [], 1)
-            if userinput:
-                line = sys.stdin.readline()
-                line = list(line)
-                if '\n' in line:
-                    userstring.append(line[:-1])
-                    userstring = userstring[0]
-                    break
-=======
+def input_linux():
+    userstring = []
 
-        while client.platform == "linux":
-            print("> ", end='', flush=True)
-            try:
-                input, w, x = select.select([sys.stdin], [], [], 1)
-                userstring.append(input)
-            except select.error as e:
-                print(e)
->>>>>>> d3e6bd19b5e11fd4386305be7ea70e63ea4e4f6c
-        return userstring
+    sleep(0.5)
+    print("> ", end='', flush=True)
+    while client.platform == "linux" and client.exitflag == False:
+        userinput, w, x = select.select([sys.stdin], [], [], 1)
+        if userinput:
+            line = sys.stdin.readline()
+            line = list(line)
+            if '\n' in line:
+                userstring.append(line[:-1])
+                userstring = userstring[0]
+                break
+    return userstring
 
 def getnamelist():
     return
@@ -179,9 +169,9 @@ if __name__ == '__main__':
         userstring = []
 
         if client.platform == "linux":
-            userstring = client.input_linux()
+            userstring = input_linux()
         elif "win" in client.platform:
-            userstring = client.input_windows()
+            userstring = input_windows()
 
         if userstring == [] or userstring == None:
             continue
