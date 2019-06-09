@@ -37,6 +37,9 @@ class Client(Thread):
     # send a message to server, print reply details to client
     def send(self, message):
         self.socket.sendall(message.encode('utf-8'))
+        if message == "kill" or message == "exit":
+            self.socket.close()
+            sys.exit(0)
 
     def verify(self, message):
         message = message.decode("utf-8")
@@ -108,6 +111,5 @@ if __name__ == '__main__':
 
         client.send(userstring)
 
-        if userstring == "exit":
-            client.socket.close()
-            sys.exit(0)
+        #if userstring == "exit":
+        #    sys.exit(0)

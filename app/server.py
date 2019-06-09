@@ -84,7 +84,7 @@ class Server(Thread):
     # kill the server. Used for testing. 
     def exit(self):
         self.alive = False
-        print("Alive: {0}".format(self.alive))
+        print("Connection closed; exiting...")
         self.socket.close()
         sys.exit(0)
 
