@@ -6,7 +6,8 @@ import socket
 import sys
 import errno
 import select
-import msvcrt
+if "win" in sys.platform:
+    import msvcrt
 import time
 from time import sleep
 from threading import Thread
@@ -126,14 +127,17 @@ class Client(Thread):
     
     def input_linux(self):
         userstring = []
-
-        if client.platform == "linux":
-            print("> ", end='', flush=True)
-            try:
-                userstring, w, x = select.select([sys.stdin], [], [], 1)
-                print(userstring)
-            except select.error as e:
-                print(e)
+        sleep(0.5)
+        print("> ", end='', flush=True)
+        while client.platform == "linux" and client.exitflag == False:
+            userinput, w, x = select.select([sys.stdin], [], [], 1)
+            if userinput:
+                line = sys.stdin.readline()
+                line = list(line)
+                if '\n' in line:
+                    userstring.append(line[:-1])
+                    userstring = userstring[0]
+                    break
         return userstring
 
 def getnamelist():
@@ -163,8 +167,6 @@ if __name__ == '__main__':
     while client.exitflag == False:
         userstring = []
 
-        print(client.platform)
-
         if client.platform == "linux":
             userstring = client.input_linux()
         elif "win" in client.platform:
@@ -179,4 +181,5 @@ if __name__ == '__main__':
             client.menu()
             continue
 
+        print("Sending: " + userstring)
         client.send(userstring)
