@@ -46,7 +46,9 @@ class serverThread(Thread):
         elif keyA == "members":
             reply = self.memberlist(keyB)
         elif keyA == "send":
-            reply = self.send(keyB, statusArray)
+            reply = self.send(statusArray)
+        elif keyA == "tell":    
+            reply = self.tell(statusArray)
 
         return reply
 
@@ -109,17 +111,44 @@ class serverThread(Thread):
             return "No members in {0}".format(keyB)
         return memberstring
 
-    def send(self, keyB, statusArray):
-        room = self.findroom(keyB)
-        if isinstance(room, str):
-            return room
+    def send(self, statusArray):
 
-        #remove the first two items from statusArray and convert to a string
-        statusArray = statusArray[2:]
-        statusArray = ' '.join(statusArray)
-
-        room.sendall(self.name, statusArray)
+        if '-' not in statusArray:
+            return ("Messages should be in the form: send [room] - [msg]. Please "
+            "check formatting and try again.")
+    
+        index = statusArray.index('-')
+        rooms = self._search_rooms(statusArray[:index])
+        
+        #remove index + 1 items of the status array and converts to a string
+        msg = statusArray[index+1:]
+        msg = ' '.join(msg)
+        msg += '\n'
+        for room in rooms:
+            if isinstance(room, Room):
+                room.sendall(self.name, msg)
         return ""
+
+    def tell(self, statusArray):
+        '''Sends a private message'''
+        # if '-' not in statusArray:
+        #     return ("Messages should be in the form: tell [name] - [msg]. Please "
+        #     "check formatting and try again.")
+        
+        # dest will be 2nd option in the status array
+        dest = statusArray[1]
+        msg = statusArray[2:]
+        msg = ' '.join(msg)
+        msg += '\n'
+        for thread in self.server.clients:
+            if thread.name == dest:
+                conn = thread.conn
+                conn.send("{0} whispers to you : {1}".format(self.name, msg).encode("utf-8"))
+                self.conn.send("You tell {0} : {1}".format(dest, msg).encode("utf-8"))
+                return ""
+        return "I'm sorry, it appears {0} is offline.".format(dest)
+
+
 
     def disconnect(self):
         for room in self.server.rooms:
