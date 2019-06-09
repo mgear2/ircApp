@@ -127,6 +127,7 @@ class Client(Thread):
     
     def input_linux(self):
         userstring = []
+<<<<<<< HEAD
         sleep(0.5)
         print("> ", end='', flush=True)
         while client.platform == "linux" and client.exitflag == False:
@@ -138,6 +139,16 @@ class Client(Thread):
                     userstring.append(line[:-1])
                     userstring = userstring[0]
                     break
+=======
+
+        while client.platform == "linux":
+            print("> ", end='', flush=True)
+            try:
+                input, w, x = select.select([sys.stdin], [], [], 1)
+                userstring.append(input)
+            except select.error as e:
+                print(e)
+>>>>>>> d3e6bd19b5e11fd4386305be7ea70e63ea4e4f6c
         return userstring
 
 def getnamelist():
