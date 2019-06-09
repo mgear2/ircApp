@@ -4,6 +4,8 @@
 # EXAMPLE: threadedServer.py 8000
 import socket
 import sys
+import errno
+import sleep
 from threading import Thread
 from room import Room
 from serverThread import serverThread
@@ -35,6 +37,11 @@ class Server(Thread):
                 conn, addr = self.socket.accept()
             except (socket.error, self.error) as e: 
                 err = e.args[0]
+                err = e.args[0]
+                # if no data was received by the socket
+                if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
+                    sleep(0.5)
+                    continue
                 # if an operation was attempted on something not a socket or host aborts connection
                 if err == 10038 or err == 10053 or err == 9:
                     print("Connection closed; exiting...")
