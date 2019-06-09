@@ -49,17 +49,13 @@ class Client(Thread):
         try:
             self.socket.sendall(message.encode('utf-8'))
         except Exception as e:
-            print(e)
-            print("Connection with server lost")
+            print("Connection with server lost with error {0}".format(e))
             self.exit()
         if message == "kill" or message == "exit":
             self.exit()
 
     def verify(self, message):
         message = message.decode("utf-8")
-        if message == 0:
-            print ("Verify: The server closed the connection. Exiting...")
-            self.exit()
         if message == "":
             return
         print(message + '; received '+ str(len(message)) + ' bytes')
@@ -85,24 +81,19 @@ class Client(Thread):
             try:
                 data = self.socket.recv(4096)
                 self.verify(data)
-                if data == 0:
-                    print("data == 0")
+                if len(data) == 0:
+                    print("Data = 0; Connection terminated by server; exiting...")
+                    self.exit()
             #except (socket.error, self.error) as e: 
             except Exception as e: 
                 err = e.args[0]
-                if err == errno.ECONNRESET:
-                    print("Connection reset")
-                    self.exit()
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
                     sleep(0.5)
                     continue
                 # if an operation was attempted on something not a socket or host aborts connection
-                if err == 10038 or err == 10053 or err == 9:
-                    print("10038/10053/9: Connection closed; exiting...")
-                    self.exit()
-                if err == 10054:
-                    print ("10054: The server closed the connection. Exiting...")
+                elif err == 10038 or err == 10053 or err == 10054 or err == 9:
+                    print("10038/10053/10054/9: Connection terminated by server; exiting...")
                     self.exit()
                 else:
                     print("Caught: " + str(e))
