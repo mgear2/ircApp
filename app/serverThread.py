@@ -126,6 +126,8 @@ class serverThread(Thread):
             current = self.server.rooms[room]
             current.remove(self.name)
         self.conn.close()
+        print("Reached exit in serverThread")
+        sys.exit(0)
 
     def _search_rooms(self, array):
         '''Searches an array of string for room names and

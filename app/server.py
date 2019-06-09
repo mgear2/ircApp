@@ -46,6 +46,8 @@ class Server(Thread):
             newthread = serverThread(self, conn)
             self.clients.append(newthread)
             newthread.start()
+        print("Exit reached in server.run()")
+        sys.exit(0)
 
     # room creation
     def newroom(self, name):
@@ -75,7 +77,9 @@ class Server(Thread):
     # kill the server. Used for testing. 
     def exit(self):
         self.alive = False
+        print("Alive: {0}".format(self.alive))
         self.socket.close()
+        print("exit reached in server.exit()")
         sys.exit(0)
 
 if __name__ == '__main__':
