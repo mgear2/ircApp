@@ -65,12 +65,10 @@ class Client(Thread):
     def run(self):
         try:
             self.socket.connect((self.host, self.port))
+            data = self.socket.recv(4096)
         except Exception as e:
-            print(e)
-            print("Could not connect")
+            print("Connection error: {0}".format(e))
             self.exit()
-        print("1")
-        data = self.socket.recv(4096)
         self.verify(data)
         self.socket.setblocking(False)
         sleep(0.5)
@@ -133,7 +131,9 @@ def input_linux():
     sleep(0.5)
     print("> ", end='', flush=True)
     while client.alive:
-        userinput = select.select([sys.stdin], [], [], 1)
+        print(client.alive)
+        # x and y are necessary placeholders for select.select
+        userinput, x, y = select.select([sys.stdin], [], [], 1)
         if userinput:
             line = sys.stdin.readline()
             line = list(line)
@@ -141,6 +141,9 @@ def input_linux():
                 userstring.append(line[:-1])
                 userstring = userstring[0]
                 break
+        else:
+            print("timed out")
+            continue
     return userstring
 
 def getnamelist():
