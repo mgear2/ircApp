@@ -6,7 +6,8 @@ import socket
 import sys
 import errno
 import select
-import msvcrt
+if "win" in sys.platform:
+    import msvcrt
 import time
 from time import sleep
 from threading import Thread
@@ -127,11 +128,11 @@ class Client(Thread):
     def input_linux(self):
         userstring = []
 
-        if client.platform == "linux":
+        while client.platform == "linux":
             print("> ", end='', flush=True)
             try:
-                userstring, w, x = select.select([sys.stdin], [], [], 1)
-                print(userstring)
+                input, w, x = select.select([sys.stdin], [], [], 1)
+                userstring.append(input)
             except select.error as e:
                 print(e)
         return userstring
