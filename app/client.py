@@ -34,6 +34,7 @@ class Client(Thread):
         self.alive = True
     
     def exit(self):
+        print("Exiting...")
         self.alive = False
         self.socket.close()
 
@@ -79,18 +80,17 @@ class Client(Thread):
                 data = self.socket.recv(4096)
                 self.verify(data)
                 if len(data) == 0:
-                    print("Data = 0; Connection terminated by server; exiting...")
+                    print("Data = 0; Connection terminated by server;")
                     self.exit()
-            #except (socket.error, self.error) as e: 
             except Exception as e: 
                 err = e.args[0]
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
                     sleep(0.5)
                     continue
-                # if an operation was attempted on something not a socket or host aborts connection
+                # Handle terminated connection
                 elif err == 10038 or err == 10053 or err == 10054 or err == 9:
-                    print("10038/10053/10054/9: Connection terminated by server; exiting...")
+                    print("10038/10053/10054/9: Connection terminated by server;")
                     self.exit()
                 else:
                     print("Caught: " + str(e))
@@ -131,9 +131,7 @@ def input_linux():
     sleep(0.5)
     print("> ", end='', flush=True)
     while client.alive:
-        print(client.alive)
-        # x and y are necessary placeholders for select.select
-        userinput, x, y = select.select([sys.stdin], [], [], 1)
+        userinput = select.select([sys.stdin], [], [], 1)[0]
         if userinput:
             line = sys.stdin.readline()
             line = list(line)
@@ -141,9 +139,6 @@ def input_linux():
                 userstring.append(line[:-1])
                 userstring = userstring[0]
                 break
-        else:
-            print("timed out")
-            continue
     return userstring
 
 def getnamelist():

@@ -37,21 +37,19 @@ class Server(Thread):
             try:
                 conn, addr = self.socket.accept()
                 conn.setblocking(True)
-            #except (socket.error, self.error) as e: 
             except Exception as e:
                 err = e.args[0]
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
                     sleep(0.5)
                     continue
-                # if an operation was attempted on something not a socket or host aborts connection
+                # Handle terminated connection
                 if err == 10038 or err == 10053 or err == 9:
                     print("Connection closed; exiting...")
                     break
                 else:
                     print("Caught: " + str(e))
                     break
-            #print("Client connected: {0}".format(addr))
             newthread = serverThread(self, conn, addr)
             self.clients.append(newthread)
             newthread.start()
@@ -84,8 +82,8 @@ class Server(Thread):
 
     # kill the server. Used for testing. 
     def exit(self):
+        print("Server: Connection closed; exiting...")
         self.alive = False
-        print("Connection closed; exiting...")
         self.socket.close()
         sys.exit(0)
 

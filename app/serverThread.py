@@ -9,7 +9,7 @@ class serverThread(Thread):
         self.addr = addr
         self.server = Server
 
-    # thread created will run this method to facilitate communication between the client and the server
+    # Thread facilitates communication between client and server
     def run(self):
         print("Client connected: {0}".format(self.addr))
         self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
@@ -17,6 +17,7 @@ class serverThread(Thread):
         while self.server.alive: 
             try:
                 data = self.conn.recv(4096)
+            # Handle client disconnect
             except Exception:
                 print("{0} disconnected from {1}".format(self.name, self.addr))
                 break
@@ -59,7 +60,6 @@ class serverThread(Thread):
         return reply
 
     def new(self, array):
-        # room creation
         rooms = array[1:]
         for room in rooms:
             returnval = self.server.newroom(room)
@@ -98,7 +98,6 @@ class serverThread(Thread):
             return "Could not find {0}".format(room)
         return room
 
-    # joins a room
     def join(self, array):
         rooms = self._search_rooms(array)
         rooms = self._room_action(rooms, 'add')
@@ -124,7 +123,6 @@ class serverThread(Thread):
         return memberstring
 
     def send(self, statusArray):
-
         if '-' not in statusArray:
             return ("Messages should be in the form: send [room] - [msg]. Please "
             "check formatting and try again.")
