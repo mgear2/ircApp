@@ -127,7 +127,6 @@ class serverThread(Thread):
             current = self.server.rooms[room]
             current.remove(self.name)
         self.conn.close()
-        print("Reached exit in serverThread")
         sys.exit(0)
 
     def _search_rooms(self, array):
@@ -159,6 +158,7 @@ class serverThread(Thread):
             else:
                 room_method(self.name)
         if retrooms != []:
+                # pylint: disable=no-member
                 retstring += "{0}; ".format(' '.join(room.name for room in retrooms))
         if len(retrooms) < len(array):
             retstring += str(notfound)

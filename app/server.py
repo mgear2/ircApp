@@ -39,7 +39,6 @@ class Server(Thread):
                 conn.setblocking(True)
             except (socket.error, self.error) as e: 
                 err = e.args[0]
-                err = e.args[0]
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
                     sleep(0.5)
@@ -55,7 +54,6 @@ class Server(Thread):
             newthread = serverThread(self, conn)
             self.clients.append(newthread)
             newthread.start()
-        print("Exit reached in server.run()")
         sys.exit(0)
 
     # room creation
@@ -88,7 +86,6 @@ class Server(Thread):
         self.alive = False
         print("Alive: {0}".format(self.alive))
         self.socket.close()
-        print("exit reached in server.exit()")
         sys.exit(0)
 
 if __name__ == '__main__':
