@@ -11,7 +11,7 @@ class serverThread(Thread):
     def run(self):
         self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
         self.name = self.conn.recv(4096).decode("utf=8")
-        while True: 
+        while self.server.alive: 
             data = self.conn.recv(4096)
             print(data)
             if data.decode("utf-8") == "exit":

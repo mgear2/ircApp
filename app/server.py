@@ -20,7 +20,8 @@ class Server(Thread):
         self.newroom("Default")
         self.platform = sys.platform
         self.seterror()
-    
+        self.alive = True
+
     def seterror(self):
         if self.platform == "linux":
             self.error = BlockingIOError
@@ -29,7 +30,7 @@ class Server(Thread):
 
     # thread created will run this method to listen for client connections
     def run(self):
-        while True:
+        while self.alive:
             try:
                 conn, addr = self.socket.accept()
             except (socket.error, self.error) as e: 
@@ -73,6 +74,7 @@ class Server(Thread):
 
     # kill the server. Used for testing. 
     def exit(self):
+        self.alive = False
         self.socket.close()
         sys.exit(0)
 
