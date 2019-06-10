@@ -17,6 +17,7 @@ class Server(Thread):
         self.socket.bind((host, port))
         self.socket.listen(5)
         self.clients = []
+        self.usernames = []
         self.rooms = {}
         self.roomno = 0
         self.newroom("Default")
@@ -50,9 +51,14 @@ class Server(Thread):
                 else:
                     print("Caught: " + str(e))
                     break
-            newthread = serverThread(self, conn, addr)
-            self.clients.append(newthread)
-            newthread.start()
+            username = conn.recv(4096).decode("utf=8")
+            if username in self.usernames:
+                conn.send("NAMEERROR".encode("utf-8"))
+            else:
+                self.usernames.append(username)
+                newthread = serverThread(self, conn, addr, username)
+                self.clients.append(newthread)
+                newthread.start()
         sys.exit(0)
 
     # room creation

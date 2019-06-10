@@ -3,17 +3,17 @@ from room import Room
 import sys
 
 class serverThread(Thread):
-    def __init__(self, Server, conn, addr):
+    def __init__(self, Server, conn, addr, name):
         super(serverThread, self).__init__()
         self.conn = conn
         self.addr = addr
         self.server = Server
+        self.name = name
 
     # Thread facilitates communication between client and server
     def run(self):
         print("Client connected: {0}".format(self.addr))
         self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
-        self.name = self.conn.recv(4096).decode("utf=8")
         while self.server.alive: 
             try:
                 data = self.conn.recv(4096)
@@ -68,6 +68,7 @@ class serverThread(Thread):
         return "Creating new room: {0}".format(' '.join(room for room in rooms))
  
     def disconnect(self):
+        self.server.usernames.remove(self.name)
         for room in self.server.rooms:
             current = self.server.rooms[room]
             current.remove(self.name)

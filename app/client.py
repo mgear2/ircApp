@@ -13,12 +13,12 @@ from time import sleep
 from threading import Thread
 
 class Client(Thread):
-    def __init__(self, host, port, name):
+    def __init__(self, host, port):
         super(Client, self).__init__()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.host = host
         self.port = port
-        self.name = name
+        self.name = self.username()
         self.menuString = ("new <title> - create new room with <title>\n"+
                             "join <room> - join a selected room\n"+
                             "leave <room> - leave a selected room\n"+
@@ -59,14 +59,14 @@ class Client(Thread):
     def run(self):
         try:
             self.socket.connect((self.host, self.port))
+            self.send(self.name)
             data = self.socket.recv(4096)
         except Exception as e:
             print("Connection error: {0}".format(e))
             self.exit()
         self.verify(data)
         self.socket.setblocking(False)
-        sleep(0.5)
-        self.send(self.name)
+        sleep(1)
 
         while self.alive:
             try:
@@ -103,6 +103,9 @@ class Client(Thread):
         message = message.decode("utf-8")
         if message == "":
             return
+        if message == "NAMEERROR":
+            print("Error: Name in use! Please select a different name")
+            self.exit()
         print(message + '; received '+ str(len(message)) + ' bytes')
         statusArray = message.split()
         if statusArray[0] == "Joined":
@@ -157,6 +160,7 @@ class Client(Thread):
         print("Exiting...")
         self.alive = False
         self.socket.close()
+        sys.exit(0)
 
     def seterror(self):
         if self.platform == "linux":
@@ -164,16 +168,12 @@ class Client(Thread):
         elif "win" in self.platform:
             self.error = WindowsError
 
-
-def getnamelist():
-    return
-
-def username():
-    while True:
-        screenName = input("Enter desired screenname: ")
-        if len(screenName) <= 20:
-            return screenName
-        print("Please select a username of 20 characters or less")
+    def username(self):
+        while True:
+            screenName = input("Enter desired screenname: ")
+            if len(screenName) <= 20:
+                return screenName
+            print("Please select a username of 20 characters or less")
 
 if __name__ == '__main__':
     if len(sys.argv) < 3:
@@ -182,9 +182,9 @@ if __name__ == '__main__':
 
     host = sys.argv[1]
     port = int(sys.argv[2])
-    screenName = username()
+    #screenName = username()
 
-    client = Client(host, port, screenName)
+    client = Client(host, port)
     client.start()
     client.commandline()
 
