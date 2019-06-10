@@ -1,18 +1,26 @@
 from threading import Thread
 from room import Room
+import sys
 
 class serverThread(Thread):
-    def __init__(self, Server, conn):
+    def __init__(self, Server, conn, addr, name):
         super(serverThread, self).__init__()
         self.conn = conn
+        self.addr = addr
         self.server = Server
+        self.name = name
 
-    # thread created will run this method to facilitate communication between the client and the server
+    # Thread facilitates communication between client and server
     def run(self):
+        print("Client connected: {0}".format(self.addr))
         self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
-        self.name = self.conn.recv(4096).decode("utf=8")
-        while True: 
-            data = self.conn.recv(4096)
+        while self.server.alive: 
+            try:
+                data = self.conn.recv(4096)
+            # Handle client disconnect
+            except Exception:
+                print("{0} disconnected from {1}".format(self.name, self.addr))
+                break
             print(data)
             if data.decode("utf-8") == "exit":
                 break
@@ -49,17 +57,22 @@ class serverThread(Thread):
             reply = self.send(statusArray)
         elif keyA == "tell":    
             reply = self.tell(statusArray)
-
         return reply
 
     def new(self, array):
-        # room creation
         rooms = array[1:]
         for room in rooms:
             returnval = self.server.newroom(room)
             if not returnval:
                 return "Roomname {0} in use!".format(room)
         return "Creating new room: {0}".format(' '.join(room for room in rooms))
+ 
+    def disconnect(self):
+        self.server.usernames.remove(self.name)
+        for room in self.server.rooms:
+            current = self.server.rooms[room]
+            current.remove(self.name)
+        self.conn.close()
 
     def kill(self):
         # kill the server. Used for testing. 
@@ -86,7 +99,6 @@ class serverThread(Thread):
             return "Could not find {0}".format(room)
         return room
 
-    # joins a room
     def join(self, array):
         rooms = self._search_rooms(array)
         rooms = self._room_action(rooms, 'add')
@@ -112,7 +124,6 @@ class serverThread(Thread):
         return memberstring
 
     def send(self, statusArray):
-
         if '-' not in statusArray:
             return ("Messages should be in the form: send [room] - [msg]. Please "
             "check formatting and try again.")
@@ -148,14 +159,6 @@ class serverThread(Thread):
                 return ""
         return "I'm sorry, it appears {0} is offline.".format(dest)
 
-
-
-    def disconnect(self):
-        for room in self.server.rooms:
-            current = self.server.rooms[room]
-            current.remove(self.name)
-        self.conn.close()
-
     def _search_rooms(self, array):
         '''Searches an array of string for room names and
         returns any matches in the beginning of the array.'''
@@ -185,6 +188,7 @@ class serverThread(Thread):
             else:
                 room_method(self.name)
         if retrooms != []:
+                # pylint: disable=no-member
                 retstring += "{0}; ".format(' '.join(room.name for room in retrooms))
         if len(retrooms) < len(array):
             retstring += str(notfound)

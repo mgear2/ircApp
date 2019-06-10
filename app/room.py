@@ -26,4 +26,3 @@ class Room:
             print("Sending to {0}".format(conn))
             message = user + " says in room " + self.name + " : " + string
             conn.sendall(message.encode("utf-8"))
-

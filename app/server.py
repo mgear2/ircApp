@@ -4,6 +4,8 @@
 # EXAMPLE: threadedServer.py 8000
 import socket
 import sys
+import errno
+from time import sleep
 from threading import Thread
 from room import Room
 from serverThread import serverThread
@@ -15,12 +17,14 @@ class Server(Thread):
         self.socket.bind((host, port))
         self.socket.listen(5)
         self.clients = []
+        self.usernames = []
         self.rooms = {}
         self.roomno = 0
         self.newroom("Default")
         self.platform = sys.platform
         self.seterror()
-    
+        self.alive = True
+
     def seterror(self):
         if self.platform == "linux":
             self.error = BlockingIOError
@@ -29,22 +33,33 @@ class Server(Thread):
 
     # thread created will run this method to listen for client connections
     def run(self):
-        while True:
+        self.socket.setblocking(False)
+        while self.alive:
             try:
                 conn, addr = self.socket.accept()
-            except (socket.error, self.error) as e: 
+                conn.setblocking(True)
+            except Exception as e:
                 err = e.args[0]
-                # if an operation was attempted on something not a socket or host aborts connection
+                # if no data was received by the socket
+                if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
+                    sleep(0.5)
+                    continue
+                # Handle terminated connection
                 if err == 10038 or err == 10053 or err == 9:
                     print("Connection closed; exiting...")
                     break
                 else:
                     print("Caught: " + str(e))
                     break
-            print("Client connected: {0}".format(addr))
-            newthread = serverThread(self, conn)
-            self.clients.append(newthread)
-            newthread.start()
+            username = conn.recv(4096).decode("utf=8")
+            if username in self.usernames:
+                conn.send("NAMEERROR".encode("utf-8"))
+            else:
+                self.usernames.append(username)
+                newthread = serverThread(self, conn, addr, username)
+                self.clients.append(newthread)
+                newthread.start()
+        sys.exit(0)
 
     # room creation
     def newroom(self, name):
@@ -73,17 +88,15 @@ class Server(Thread):
 
     # kill the server. Used for testing. 
     def exit(self):
+        print("Server: Connection closed; exiting...")
+        self.alive = False
         self.socket.close()
         sys.exit(0)
 
 if __name__ == '__main__':
-
     if len(sys.argv) < 2:
         print ("USAGE:   main.py <PORT>")
         sys.exit(0)
 
-    # create a Server instance
     server = Server('', int(sys.argv[1]))
-
-    # start a thread to listen for connections
     server.start()
