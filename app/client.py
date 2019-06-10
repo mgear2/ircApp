@@ -33,35 +33,28 @@ class Client(Thread):
         self.seterror()
         self.alive = True
     
-    def exit(self):
-        print("Exiting...")
-        self.alive = False
-        self.socket.close()
+    def commandline(self):
+        print("Enter Command (M for Menu)")
+        while self.alive:
+            userstring = []
 
-    def seterror(self):
-        if self.platform == "linux":
-            self.error = BlockingIOError
-        elif "win" in self.platform:
-            self.error = WindowsError
+            if self.platform == "linux":
+                userstring = self.input_linux()
+            elif "win" in self.platform:
+                userstring = self.input_windows()
 
-    # send a message to server, print reply details to client
-    def send(self, message):
-        try:
-            self.socket.sendall(message.encode('utf-8'))
-        except Exception as e:
-            print("Connection with server lost with error {0}".format(e))
-            self.exit()
-        if message == "kill" or message == "exit":
-            self.exit()
+            if userstring == [] or userstring == None:
+                continue
 
-    def verify(self, message):
-        message = message.decode("utf-8")
-        if message == "":
-            return
-        print(message + '; received '+ str(len(message)) + ' bytes')
-        statusArray = message.split()
-        if statusArray[0] == "Joined":
-            self.rooms.append(statusArray[1])
+            userstring = ''.join(userstring)
+
+            if userstring == "M":
+                self.menu()
+                continue
+
+            print("Sending: " + userstring)
+            self.send(userstring)
+        return
 
     def run(self):
         try:
@@ -96,50 +89,81 @@ class Client(Thread):
                     print("Caught: " + str(e))
                     self.exit()
 
+    # send a message to server, print reply details to client
+    def send(self, message):
+        try:
+            self.socket.sendall(message.encode('utf-8'))
+        except Exception as e:
+            print("Connection with server lost with error {0}".format(e))
+            self.exit()
+        if message == "kill" or message == "exit":
+            self.exit()
+
+    def verify(self, message):
+        message = message.decode("utf-8")
+        if message == "":
+            return
+        print(message + '; received '+ str(len(message)) + ' bytes')
+        statusArray = message.split()
+        if statusArray[0] == "Joined":
+            self.rooms.append(statusArray[1])
+
+    def input_windows(self):
+        userstring = []
+        while self.alive:
+            print("> " + ''.join(userstring), end='', flush=True)
+            t0 = time.time()
+            while time.time() - t0 < 1:
+                if msvcrt.kbhit():
+                    character = msvcrt.getch()
+                    char_decode = character.decode("utf-8")
+                    if char_decode == '\b':
+                        if len(userstring) > 0:
+                            sys.stdout.write("\b")
+                            sys.stdout.write(" ")
+                            sys.stdout.flush()
+                            del userstring[-1]
+                        msvcrt.putch(character)
+                        continue
+                    elif char_decode == '\r':
+                        print("\n")
+                        return userstring
+                    msvcrt.putch(character)
+                    userstring.append(char_decode)
+                time.sleep(0.1)
+            sys.stdout.write("\r")
+            continue
+    
+    def input_linux(self):
+        userstring = []
+        sleep(0.5)
+        print("> ", end='', flush=True)
+        while self.alive:
+            userinput = select.select([sys.stdin], [], [], 1)[0]
+            if userinput:
+                line = sys.stdin.readline()
+                line = list(line)
+                if '\n' in line:
+                    userstring.append(line[:-1])
+                    userstring = userstring[0]
+                    break
+        return userstring
+
     # print out a menu to instruct users in app usage
     def menu(self):
         print(self.menuString)
 
-def input_windows():
-    userstring = []
-    while client.alive:
-        print("> " + ''.join(userstring), end='', flush=True)
-        t0 = time.time()
-        while time.time() - t0 < 1:
-            if msvcrt.kbhit():
-                character = msvcrt.getch()
-                char_decode = character.decode("utf-8")
-                if char_decode == '\b':
-                    if len(userstring) > 0:
-                        sys.stdout.write("\b")
-                        sys.stdout.write(" ")
-                        sys.stdout.flush()
-                        del userstring[-1]
-                    msvcrt.putch(character)
-                    continue
-                elif char_decode == '\r':
-                    print("\n")
-                    return userstring
-                msvcrt.putch(character)
-                userstring.append(char_decode)
-            time.sleep(0.1)
-        sys.stdout.write("\r")
-        continue
-    
-def input_linux():
-    userstring = []
-    sleep(0.5)
-    print("> ", end='', flush=True)
-    while client.alive:
-        userinput = select.select([sys.stdin], [], [], 1)[0]
-        if userinput:
-            line = sys.stdin.readline()
-            line = list(line)
-            if '\n' in line:
-                userstring.append(line[:-1])
-                userstring = userstring[0]
-                break
-    return userstring
+    def exit(self):
+        print("Exiting...")
+        self.alive = False
+        self.socket.close()
+
+    def seterror(self):
+        if self.platform == "linux":
+            self.error = BlockingIOError
+        elif "win" in self.platform:
+            self.error = WindowsError
+
 
 def getnamelist():
     return
@@ -156,31 +180,12 @@ if __name__ == '__main__':
         print ("USAGE: client.py <HOST> <PORT>")
         sys.exit(0)
 
+    host = sys.argv[1]
+    port = int(sys.argv[2])
     screenName = username()
 
-    client = Client(sys.argv[1], int(sys.argv[2]), screenName)
+    client = Client(host, port, screenName)
     client.start()
-
-    print("Enter Command (M for Menu)")
-
-    while client.alive:
-        userstring = []
-
-        if client.platform == "linux":
-            userstring = input_linux()
-        elif "win" in client.platform:
-            userstring = input_windows()
-
-        if userstring == [] or userstring == None:
-            continue
-
-        userstring = ''.join(userstring)
-
-        if userstring == "M":
-            client.menu()
-            continue
-
-        print("Sending: " + userstring)
-        client.send(userstring)
+    client.commandline()
 
     sys.exit(0)
