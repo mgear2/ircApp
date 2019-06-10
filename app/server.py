@@ -11,6 +11,27 @@ from room import Room
 from serverThread import serverThread
 
 class Server(Thread):
+    """ Class that maintains information for the server in client-server 
+        architecture.
+
+    Args:
+        host (str): a string representing the host. Can be Internet domain or 
+                IP address.
+        port (int): 16 bit unsigned integer representing port connection.
+
+    Attributes:
+        socket (Socket) : Socket class that enables communication between 
+            clients.
+        clients (list(serverThread)) : a list of client serverThread classes.
+        usernames (list(str)) : a list of client user names.
+        rooms (dict(Room)) : a dictionary of Room classes.
+        roomno (int) : incrementing integer value to maintain unique room
+            identifier.
+        platform (str) : the OS platform set on creation
+        alive (bool) : represents the current state of the server, active is 
+            True.
+
+    """
     def __init__(self, host, port):
         super(Server, self).__init__()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -26,13 +47,18 @@ class Server(Thread):
         self.alive = True
 
     def seterror(self):
+        """ Sets error property in Server class based on platform."""
+
         if self.platform == "linux":
             self.error = BlockingIOError
         elif "win" in self.platform:
             self.error = WindowsError
+        return 
 
-    # thread created will run this method to listen for client connections
     def run(self):
+        """ Listens for client connections. Exits when alive attribute is
+        modified. """
+
         self.socket.setblocking(False)
         while self.alive:
             try:
@@ -60,9 +86,19 @@ class Server(Thread):
                 self.clients.append(newthread)
                 newthread.start()
         sys.exit(0)
+        return 
 
-    # room creation
     def newroom(self, name):
+        """ Creates new Room object instances and adds to rooms dictionary.
+
+        Args:
+            name (str) : the name of the room to be created.
+
+        Returns:
+            bool : True on success, False if room name is already in use.
+
+        """
+
         if name in self.rooms:
             return False
         newrm = Room(name, self.roomno)
@@ -70,28 +106,41 @@ class Server(Thread):
         self.rooms[newrm.name] = newrm
         return True
 
-    # lists the clients on the server side
     def clientlist(self):
+        """ Lists the clients on the server side.
+
+        Returns:
+            str : A string with name of all active clients.
+        """
+
         clientstring = ""
         for client in self.clients:
             clientstring += (client.name +"\n")
             print(client, client.name)
         return clientstring
 
-    # lists the rooms on the server side
     def roomlist(self):
+        """ Lists the rooms on the server side.
+
+        Returns:
+            str : A string of all the rooms names.
+
+        """
+
         roomstring = ""
         for room in self.rooms:
             roomstring += (room + "\n")
             print(room)
         return roomstring
 
-    # kill the server. Used for testing. 
     def exit(self):
+        """ Kills the server. Used for testing. """
+
         print("Server: Connection closed; exiting...")
         self.alive = False
         self.socket.close()
         sys.exit(0)
+        return 
 
 if __name__ == '__main__':
     if len(sys.argv) < 2:
