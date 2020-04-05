@@ -2,6 +2,7 @@ from threading import Thread
 from room import Room
 import sys
 
+
 class serverThread(Thread):
     """ Class that maintains information on the server for specific clients.
 
@@ -32,8 +33,10 @@ class serverThread(Thread):
         """ Thread faciliates communication between client and server."""
 
         print("Client connected: {0}".format(self.addr))
-        self.conn.send("Welcome. Connection info: {0}".format(self.conn).encode("utf-8"))
-        while self.server.alive: 
+        self.conn.send(
+            "Welcome. Connection info: {0}".format(self.conn).encode("utf-8")
+        )
+        while self.server.alive:
             try:
                 data = self.conn.recv(4096)
             # Handle client disconnect
@@ -86,7 +89,7 @@ class serverThread(Thread):
             reply = self.memberlist(keyB)
         elif keyA == "send":
             reply = self.send(statusArray)
-        elif keyA == "tell":    
+        elif keyA == "tell":
             reply = self.tell(statusArray)
         return reply
 
@@ -100,14 +103,14 @@ class serverThread(Thread):
             str : String to display to user whether successful or not.
         
         """
-        
+
         rooms = array[1:]
         for room in rooms:
             returnval = self.server.newroom(room)
             if not returnval:
                 return "Roomname {0} in use!".format(room)
-        return "Creating new room: {0}".format(' '.join(room for room in rooms))
- 
+        return "Creating new room: {0}".format(" ".join(room for room in rooms))
+
     def disconnect(self):
         """ Removes username from server and then closers connection."""
 
@@ -183,7 +186,7 @@ class serverThread(Thread):
         """
 
         rooms = self._search_rooms(array)
-        rooms = self._room_action(rooms, 'add')
+        rooms = self._room_action(rooms, "add")
         retstring = "Joined "
         retstring += rooms
         return retstring
@@ -199,7 +202,7 @@ class serverThread(Thread):
         
         """
         rooms = self._search_rooms(array)
-        rooms = self._room_action(rooms, 'remove', False)
+        rooms = self._room_action(rooms, "remove", False)
         retstring = "Left "
         retstring += rooms
         return retstring
@@ -235,17 +238,19 @@ class serverThread(Thread):
         
         """
 
-        if '-' not in statusArray:
-            return ("Messages should be in the form: send [room] - [msg]."
-            + " Please check formatting and try again.")
-    
-        index = statusArray.index('-')
+        if "-" not in statusArray:
+            return (
+                "Messages should be in the form: send [room] - [msg]."
+                + " Please check formatting and try again."
+            )
+
+        index = statusArray.index("-")
         rooms = self._search_rooms(statusArray[:index])
-        
-        #remove index + 1 items of the status array and converts to a string
-        msg = statusArray[index+1:]
-        msg = ' '.join(msg)
-        msg += '\n'
+
+        # remove index + 1 items of the status array and converts to a string
+        msg = statusArray[index + 1 :]
+        msg = " ".join(msg)
+        msg += "\n"
         for room in rooms:
             if isinstance(room, Room):
                 room.sendall(self.name, msg)
@@ -265,15 +270,15 @@ class serverThread(Thread):
         # dest will be 2nd option in the status array
         dest = statusArray[1]
         msg = statusArray[2:]
-        msg = ' '.join(msg)
-        msg += '\n'
+        msg = " ".join(msg)
+        msg += "\n"
         for thread in self.server.clients:
             if thread.name == dest:
                 conn = thread.conn
-                conn.send("{0} whispers to you : {1}"
-                    .format(self.name, msg).encode("utf-8"))
-                self.conn.send("You tell {0} : {1}"
-                    .format(dest, msg).encode("utf-8"))
+                conn.send(
+                    "{0} whispers to you : {1}".format(self.name, msg).encode("utf-8")
+                )
+                self.conn.send("You tell {0} : {1}".format(dest, msg).encode("utf-8"))
                 return ""
         return "I'm sorry, it appears {0} is offline.".format(dest)
 
@@ -298,7 +303,7 @@ class serverThread(Thread):
                 break
         return res
 
-    def _room_action(self, array, string, conn = True):
+    def _room_action(self, array, string, conn=True):
         """Performs a method on the room class based on parameters given.
 
         Args:
@@ -319,7 +324,7 @@ class serverThread(Thread):
             if isinstance(room, Room):
                 retrooms.append(room)
                 room_method = getattr(room, string)
-            else: 
+            else:
                 notfound.append(room)
                 continue
             if conn:
@@ -327,9 +332,8 @@ class serverThread(Thread):
             else:
                 room_method(self.name)
         if retrooms != []:
-                # pylint: disable=no-member
-                retstring += "{0}; ".format(' '
-                    .join(room.name for room in retrooms))
+            # pylint: disable=no-member
+            retstring += "{0}; ".format(" ".join(room.name for room in retrooms))
         if len(retrooms) < len(array):
             retstring += str(notfound)
         return retstring

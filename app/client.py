@@ -6,11 +6,13 @@ import socket
 import sys
 import errno
 import select
+
 if "win" in sys.platform:
     import msvcrt
 import time
 from time import sleep
 from threading import Thread
+
 
 class Client(Thread):
     """Client class used to hold information about the client.
@@ -40,25 +42,24 @@ class Client(Thread):
         self.host = host
         self.port = port
         self.name = self.username()
-        self.menuString = ("new [room] ([room] ...) : create new room with" 
-                            + " specified name\n"
-                            "join [room] ([room] ...)   : join the selected"
-                            + " room(s)\n"+
-                            "leave [room] ([room] ...)  : leave the selected"
-                            + " room(s)\n"+
-                            "send [room] ([room] ...) - [msg]   : send message" 
-                            + " to a selected room(s)\n"+
-                            "rooms  : list available rooms\n"+
-                            "members [room]     : list the members of a room\n"
-                            "clients    : list of clients from server" 
-                            + " directory\n"
-                            "kill   : kill the server\n"+
-                            "exit   : exit the program\n")
+        self.menuString = (
+            "new [room] ([room] ...) : create new room with" + " specified name\n"
+            "join [room] ([room] ...)   : join the selected"
+            + " room(s)\n"
+            + "leave [room] ([room] ...)  : leave the selected"
+            + " room(s)\n"
+            + "send [room] ([room] ...) - [msg]   : send message"
+            + " to a selected room(s)\n"
+            + "rooms  : list available rooms\n"
+            + "members [room]     : list the members of a room\n"
+            "clients    : list of clients from server" + " directory\n"
+            "kill   : kill the server\n" + "exit   : exit the program\n"
+        )
         self.rooms = []
         self.platform = sys.platform
         self.seterror()
         self.alive = True
-    
+
     def commandline(self):
         """ Function used to maintain user input"""
 
@@ -74,7 +75,7 @@ class Client(Thread):
             if userstring == [] or userstring == None:
                 continue
 
-            userstring = ''.join(userstring)
+            userstring = "".join(userstring)
 
             if userstring == "M":
                 self.menu()
@@ -105,7 +106,7 @@ class Client(Thread):
                 if len(data) == 0:
                     print("Data = 0; Connection terminated by server;")
                     self.exit()
-            except Exception as e: 
+            except Exception as e:
                 err = e.args[0]
                 # if no data was received by the socket
                 if err == errno.EAGAIN or err == errno.EWOULDBLOCK:
@@ -113,8 +114,7 @@ class Client(Thread):
                     continue
                 # Handle terminated connection
                 elif err == 10038 or err == 10053 or err == 10054 or err == 9:
-                    print("10038/10053/10054/9: Connection terminated" 
-                    + " by server;")
+                    print("10038/10053/10054/9: Connection terminated" + " by server;")
                     self.exit()
                 else:
                     print("Caught: " + str(e))
@@ -129,7 +129,7 @@ class Client(Thread):
         """
 
         try:
-            self.socket.sendall(message.encode('utf-8'))
+            self.socket.sendall(message.encode("utf-8"))
         except Exception as e:
             print("Connection with server lost with error {0}".format(e))
             self.exit()
@@ -154,7 +154,7 @@ class Client(Thread):
         if message == "NAMEERROR":
             print("Error: Name in use! Please select a different name")
             self.exit()
-        print(message + '; received '+ str(len(message)) + ' bytes')
+        print(message + "; received " + str(len(message)) + " bytes")
         statusArray = message.split()
         if statusArray[0] == "Joined":
             self.rooms.append(statusArray[1])
@@ -164,13 +164,13 @@ class Client(Thread):
 
         userstring = []
         while self.alive:
-            print("> " + ''.join(userstring), end='', flush=True)
+            print("> " + "".join(userstring), end="", flush=True)
             t0 = time.time()
             while time.time() - t0 < 1:
                 if msvcrt.kbhit():
                     character = msvcrt.getch()
                     char_decode = character.decode("utf-8")
-                    if char_decode == '\b':
+                    if char_decode == "\b":
                         if len(userstring) > 0:
                             sys.stdout.write("\b")
                             sys.stdout.write(" ")
@@ -178,7 +178,7 @@ class Client(Thread):
                             del userstring[-1]
                         msvcrt.putch(character)
                         continue
-                    elif char_decode == '\r':
+                    elif char_decode == "\r":
                         print("\n")
                         return userstring
                     msvcrt.putch(character)
@@ -186,19 +186,19 @@ class Client(Thread):
                 time.sleep(0.1)
             sys.stdout.write("\r")
             # Removed continue
-    
+
     def input_linux(self):
         """ Ensures that the I/O is non-blocking for linux."""
 
         userstring = []
         sleep(0.5)
-        print("> ", end='', flush=True)
+        print("> ", end="", flush=True)
         while self.alive:
             userinput = select.select([sys.stdin], [], [], 1)[0]
             if userinput:
                 line = sys.stdin.readline()
                 line = list(line)
-                if '\n' in line:
+                if "\n" in line:
                     userstring.append(line[:-1])
                     userstring = userstring[0]
                     break
@@ -239,14 +239,15 @@ class Client(Thread):
                 return screenName
             print("Please select a username of 20 characters or less")
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     if len(sys.argv) < 3:
-        print ("USAGE: client.py <HOST> <PORT>")
+        print("USAGE: client.py <HOST> <PORT>")
         sys.exit(0)
 
     host = sys.argv[1]
     port = int(sys.argv[2])
-    #screenName = username()
+    # screenName = username()
 
     client = Client(host, port)
     client.start()

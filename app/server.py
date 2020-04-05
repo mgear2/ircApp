@@ -10,6 +10,7 @@ from threading import Thread
 from room import Room
 from serverThread import serverThread
 
+
 class Server(Thread):
     """ Class that maintains information for the server in client-server 
         architecture.
@@ -32,6 +33,7 @@ class Server(Thread):
             True.
 
     """
+
     def __init__(self, host, port):
         super(Server, self).__init__()
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -53,7 +55,7 @@ class Server(Thread):
             self.error = BlockingIOError
         elif "win" in self.platform:
             self.error = WindowsError
-        return 
+        return
 
     def run(self):
         """ Listens for client connections. Exits when alive attribute is
@@ -86,7 +88,7 @@ class Server(Thread):
                 self.clients.append(newthread)
                 newthread.start()
         sys.exit(0)
-        return 
+        return
 
     def newroom(self, name):
         """ Creates new Room object instances and adds to rooms dictionary.
@@ -115,7 +117,7 @@ class Server(Thread):
 
         clientstring = ""
         for client in self.clients:
-            clientstring += (client.name +"\n")
+            clientstring += client.name + "\n"
             print(client, client.name)
         return clientstring
 
@@ -129,7 +131,7 @@ class Server(Thread):
 
         roomstring = ""
         for room in self.rooms:
-            roomstring += (room + "\n")
+            roomstring += room + "\n"
             print(room)
         return roomstring
 
@@ -140,12 +142,13 @@ class Server(Thread):
         self.alive = False
         self.socket.close()
         sys.exit(0)
-        return 
+        return
 
-if __name__ == '__main__':
+
+if __name__ == "__main__":
     if len(sys.argv) < 2:
-        print ("USAGE:   main.py <PORT>")
+        print("USAGE:   main.py <PORT>")
         sys.exit(0)
 
-    server = Server('', int(sys.argv[1]))
+    server = Server("", int(sys.argv[1]))
     server.start()

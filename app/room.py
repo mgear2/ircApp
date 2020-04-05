@@ -43,7 +43,7 @@ class Room:
         if name not in self.members:
             return
         self.members.pop(name)
-        return 
+        return
 
     def memberlist(self):
         """ Creates a list of members.
@@ -55,7 +55,7 @@ class Room:
 
         memberstring = ""
         for member in self.members:
-            memberstring += (member + "\n")
+            memberstring += member + "\n"
         return memberstring
 
     def sendall(self, user, string):
@@ -66,10 +66,10 @@ class Room:
             string (str) : Message to be sent.
         
         """
-        
+
         for member in self.members:
             conn = self.members[member]
             print("Sending to {0}".format(conn))
             message = user + " says in room " + self.name + " : " + string
             conn.sendall(message.encode("utf-8"))
-        return 
+        return
